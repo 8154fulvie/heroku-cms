@@ -4,6 +4,8 @@ require 'rubygems'
 require 'sinatra'
 require 'data_mapper'
 require 'sass'
+require 'carrierwave'
+require 'carrierwave/datamapper'
 
 DataMapper.setup(:default, ENV['DATABASE_URL'] || 'sqlite:./db/page.db')
 
@@ -22,8 +24,23 @@ class Page
   property :updated_at,       DateTime
 end
 
-DataMapper.finalize
-#DataMapper.auto_migrate!
+#DataMapper.finalize
+DataMapper.auto_migrate!
+
+#конфигурация carrierwave
+class ImageUploader < CarrierWave::Uploader::Base
+  include CarrierWave::MiniMagick
+  storage :file
+  version :thumb do
+    process :resize_to_fill => [100,100]
+  end
+end
+
+class MyImage
+  include DataMapper::Resource
+  property :id, Serial
+  mount_uploader :image, ImageUploader, type: String
+end
 
 #Sinatra configuration
 set :public_directory, './public'
@@ -91,6 +108,48 @@ end
 get '/admin/delete/:id' do
   Page.get(params[:id]).destroy
   redirect '/admin/pages'
+end
+
+post '/tests/upload.php' do
+  @image = MyImage.new
+  @image.image = params[:file] #загрузка изображения
+  @image.save
+
+  #content_type 'image/jpg'
+  #img = File.read(@image.image.current_path)
+  #img.format = 'jpg'
+  #img.to_blob
+  #для версии 5 возвращается только путь
+  #return @image.image.url
+
+  #content_type @image.image.content_type #'image/jpg'
+  #@image.image.read()
+
+  #img = Magick::Image.read(@image.image.current_path)[0]
+  #img = File.open(@image.image.current_path)
+  #content_type 'image/jpg'
+  #img.read
+  #img.format = 'jpg'
+  #img.to_blob
+
+  #для отправки файла целиком
+  #send_file @image.image.current_path, :filename => @image.image.filename, :type => 'image/jpeg'
+
+  "<img src=#{@image.image.url} />"
+end
+
+get '/tests/images.json' do
+  content = '['
+  MyImage.all.each do |img|
+    content += '{"thumb": "'
+    content += img.image.thumb.url
+    content += '", "image": "'
+    content += img.image.url
+    content += '"},'
+  end
+  content = content[0,content.length-1]
+  content += ']'
+  content
 end
 
 get '/' do
