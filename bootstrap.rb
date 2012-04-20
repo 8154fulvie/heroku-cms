@@ -28,24 +28,33 @@ DataMapper.finalize
 #DataMapper.auto_migrate!
 
 #конфигурация carrierwave
+#CarrierWave.configure do |config| 
+#  config.root = "#{Dir.pwd}/public/uploads/" 
+#end
+
 class ImageUploader < CarrierWave::Uploader::Base
   include CarrierWave::MiniMagick
   storage :file
 
-  def store_dir 
-    "/uploads/images" 
-  end
+  #def store_dir 
+  #  "uploads/images/" 
+  #end
+
+  #def cache_dir
+  #  "uploads/tmp/"
+  #end
 
   #process :resize_to_fit => [600,600]
 
-  version :thumb do
-    process :resize_to_fill => [100,100]
-  end
+  #version :thumb do
+  #  process :resize_to_fill => [100,100]
+  #end
 end
 
 class MyImage
   include DataMapper::Resource
   property :id, Serial
+  #property :image, String, :auto_validation => false
   mount_uploader :image, ImageUploader, type: String
 end
 
@@ -119,9 +128,14 @@ end
 
 post '/tests/upload.php' do
   @image = MyImage.new
+  puts 'new image'
   @image.image = params[:file] #загрузка изображения
+  puts 'create image'
+  puts "#{@image.image.url}"
   @image.save
-
+  puts 'save image'
+  @image.reload
+  puts 'reload image'
   #content_type 'image/jpg'
   #img = File.read(@image.image.current_path)
   #img.format = 'jpg'
