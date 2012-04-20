@@ -98,12 +98,20 @@ end
 
 post '/admin/edit/:id' do
   @page = Page.get(params[:id])
-  params.delete 'submit'
-  params.delete 'id'
-  params.delete 'splat'
-  params.delete 'captures' 
-  params[:updated_at] = Time.now
-  @page.attributes = params
+  #params.delete 'submit'
+  #params.delete 'id'
+  #params.delete 'splat'
+  #params.delete 'captures' 
+  #params[:updated_at] = Time.now
+  #@page.attributes = params
+  @page.name = params[:name]
+  @page.alias = params[:alias]
+  @page.short = params[:short]
+  @page.full = params[:full]
+  @page.seo_title = params[:seo_title]
+  @page.seo_keywords = params[:seo_keywords]
+  @page.seo_description = params[:seo_description]
+  @page.updated_at = Time.now
   @page.save
   redirect '/admin/pages'
 end
