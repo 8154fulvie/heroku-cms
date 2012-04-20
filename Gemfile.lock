@@ -1,3 +1,11 @@
+GIT
+  remote: git://github.com/jnicklas/carrierwave.git
+  revision: 5ee932e5c6bda02508c76ed54f74720fdddd1f8d
+  branch: 0.5-stable
+  specs:
+    carrierwave (0.5.8)
+      activesupport (>= 3.0)
+
 GEM
   remote: http://rubygems.org/
   specs:
@@ -6,8 +14,6 @@ GEM
       multi_json (~> 1.0)
     addressable (2.2.6)
     bcrypt-ruby (3.0.1)
-    carrierwave (0.5.8)
-      activesupport (~> 3.0)
     carrierwave-datamapper (0.2.0)
       carrierwave (~> 0.5.6)
       dm-core (~> 1.0)
@@ -89,7 +95,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  carrierwave
+  carrierwave!
   carrierwave-datamapper
   data_mapper
   dm-postgres-adapter
