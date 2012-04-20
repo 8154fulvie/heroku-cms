@@ -3,6 +3,7 @@
 require 'rubygems'
 require 'sinatra'
 require 'data_mapper'
+require 'sass'
 
 DataMapper.setup(:default, ENV['DATABASE_URL'] || 'sqlite:./db/page.db')
 
@@ -26,6 +27,10 @@ DataMapper.finalize
 
 #Sinatra configuration
 set :public_directory, './public'
+
+get '/stylesheet.css' do
+  sass :stylesheet, :style => :expanded
+end
 
 #helpers
 helpers do
