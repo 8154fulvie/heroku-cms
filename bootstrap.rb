@@ -96,14 +96,14 @@ end
 get '/' do
   @page = Page.first(:alias => 'mainpage')
   @pages = Page.all(:alias.not => 'mainpage')
-  erb :page
+  haml :page
 end
 
 get '/:alias.html' do
   @page = Page.first(:alias => params[:alias])
   not_found 'Страница не найдена' if @page.nil?
   @pages = Page.all(:alias.not => 'mainpage')
-  erb :page
+  haml :page
 end
 
 
