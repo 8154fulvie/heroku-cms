@@ -4,8 +4,11 @@ require 'rubygems'
 require 'sinatra'
 require 'data_mapper'
 require 'sass'
-require 'carrierwave'
-require 'carrierwave/datamapper'
+#require 'carrierwave'
+#require 'carrierwave/datamapper'
+#require 'fog'
+#require 'paperclip'
+require 'dm-paperclip'
 
 DataMapper.setup(:default, ENV['DATABASE_URL'] || 'sqlite:./db/page.db')
 
@@ -24,17 +27,67 @@ class Page
   property :updated_at,       DateTime
 end
 
-DataMapper.finalize
-#DataMapper.auto_migrate!
+#DataMapper.finalize
+DataMapper.auto_migrate!
 
-#конфигурация carrierwave
-#CarrierWave.configure do |config| 
-#  config.root = "#{Dir.pwd}/public/uploads/" 
+##migration( 1, :add_my_image_paperclip_fields ) do
+#up do
+#    modify_table :my_image do
+#      add_column :image_file_name, "varchar(255)"
+#      add_column :image_content_type, "varchar(255)"
+#      add_column :image_file_size, "integer"
+#      add_column :image_updated_at, "datetime"
+#    end
+#  end
+#  down do
+#    modify_table :my_image do
+#      drop_columns :image_file_name, :image_content_type, :image_file_size, :image_updated_at
+#    end
+#  end
 #end
 
-class ImageUploader < CarrierWave::Uploader::Base
-  include CarrierWave::MiniMagick
-  storage :file
+class MyImage
+  include DataMapper::Resource
+  include Paperclip::Resource
+  property :id, Serial
+  #property :falename, String
+  has_attached_file :image,
+                    :storage => :s3,
+                    #:bucket => 'MYFIRSTBUCKETS',
+                    :s3_credentials => {
+                      :access_key_id => 'AKIAJ533TM552SWWNZFA',
+                      :secret_access_key => '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',
+                      :bucket => "MYFIRSTBUCKETS",
+                      :path => "images/:basename.:extension"
+                    },
+                    :styles => { :medium => "300x300>",
+                                 :thumb => "100x100>" }
+end
+
+Paperclip.configure do |config|
+  #config.root               = Rails.root # the application root to anchor relative urls (defaults to Dir.pwd)
+  #config.env                = Rails.env  # server env support, defaults to ENV['RACK_ENV'] or 'development'
+  config.use_dm_validations = false       # validate attachment sizes and such, defaults to false
+  #config.processors_path    = 'lib/pc'   # relative path to look for processors, defaults to 'lib/paperclip_processors'
+end
+
+#конфигурация carrierwave
+#CarrierWave.configure do |config|
+#  config.fog_credentials = {
+#    :provider               => 'AWS',       # required
+#    :aws_access_key_id      => 'AKIAJ533TM552SWWNZFA',       # required
+#    :aws_secret_access_key  => '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',       # required
+#    :region                 => 'eu-west-1'  # optional, defaults to 'us-east-1'
+#  }
+#  config.fog_directory  = 'MYFIRSTBUCKETS'                     # required
+#  #config.fog_host       = 'https://assets.example.com'            # optional, defaults to nil
+#  config.fog_public     = false                                   # optional, defaults to true
+#  config.fog_attributes = {'Cache-Control'=>'max-age=315576000'}  # optional, defaults to {}
+#end
+
+#class ImageUploader < CarrierWave::Uploader::Base
+#  include CarrierWave::MiniMagick
+#  storage :fog #:file
 
   #def store_dir 
   #  "uploads/images/" 
@@ -49,14 +102,14 @@ class ImageUploader < CarrierWave::Uploader::Base
   #version :thumb do
   #  process :resize_to_fill => [100,100]
   #end
-end
+#end
 
-class MyImage
-  include DataMapper::Resource
-  property :id, Serial
+#class MyImage
+#  include DataMapper::Resource
+#  property :id, Serial
   #property :image, String, :auto_validation => false
-  mount_uploader :image, ImageUploader, type: String
-end
+#  mount_uploader :image, ImageUploader #, type: String
+#end
 
 #Sinatra configuration
 set :public_directory, './public'
