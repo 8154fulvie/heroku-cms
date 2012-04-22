@@ -11,6 +11,8 @@ require 'sass'
 #require 'dm-paperclip'
 #require 'aws-s3'
 require 'aws/s3'
+require 'mini_magick'
+#require 'RMagick'
 
 set :bucket, 'MYFIRSTBUCKETS'
 set :s3_key, 'AKIAJ533TM552SWWNZFA'
@@ -33,6 +35,59 @@ class Page
   property :updated_at,       DateTime
 end
 
+class MyImage
+  include DataMapper::Resource
+
+  attr_writer :tmpfile
+  
+  property :id,               Serial
+  property :original,         String, :length=>255
+  property :thumb,            String, :length=>255
+  property :name,             String, :length=>255
+
+  before :save, :save_image_s3
+
+  def save_image_s3
+    AWS::S3::Base.establish_connection!(
+    :access_key_id     => settings.s3_key,
+    :secret_access_key => settings.s3_secret)
+  
+  #while blk = tmpfile.read(65536)
+  
+    AWS::S3::S3Object.store(name, @tmpfile, settings.bucket,:access => :public_read)
+
+    img = MiniMagick::Image.read(@tmpfile.open)
+    img.resize("150x150")
+    #length = t.rows > t.columns ? t.columns : t.rows
+    #thumbnail = t.crop(CenterGravity, length, length)
+
+    AWS::S3::S3Object.store("_thumb_"+name, img.to_blob, settings.bucket,:access => :public_read)
+
+    #AWS::S3::S3Object.store(name,open(tmpfile),settings.bucket,:access => :public_read)     
+  #end
+  
+  #AWS::S3::Base.establish_connection!(
+  #    :access_key_id     => settings.s3_key,
+  #    :secret_access_key => settings.s3_secret)
+  
+    self.original = AWS::S3::S3Object.find(name, settings.bucket).url #params[:file] #загрузка изображения
+    self.thumb = AWS::S3::S3Object.find("_thumb_"+name, settings.bucket).url  
+  end
+
+  #include Paperclip::Resource
+  #property :id, Serial
+  #property :falename, String
+  #has_attached_file :image,
+  #                  :storage => :s3,
+  #                  :bucket => 'MYFIRSTBUCKETS', #ENV['S3_BUCKET_NAME'],
+  #                  :s3_credentials => {
+  #                    :access_key_id => 'AKIAJ533TM552SWWNZFA', #ENV['AWS_ACCESS_KEY_ID'],
+  #                    :secret_access_key => '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' #ENV['AWS_SECRET_ACCESS_KEY']
+  #                  },
+  #                  :styles => { :medium => "300x300>",
+  #                               :thumb => "100x100>" }
+end
+
 #DataMapper.finalize
 DataMapper.auto_migrate!
 
@@ -51,26 +106,6 @@ DataMapper.auto_migrate!
 #    end
 #  end
 #end
-
-class MyImage
-  include DataMapper::Resource
-
-  property :id,               Serial
-  property :image,             String, :length=>255
-
-  #include Paperclip::Resource
-  #property :id, Serial
-  #property :falename, String
-  #has_attached_file :image,
-  #                  :storage => :s3,
-  #                  :bucket => 'MYFIRSTBUCKETS', #ENV['S3_BUCKET_NAME'],
-  #                  :s3_credentials => {
-  #                    :access_key_id => 'AKIAJ533TM552SWWNZFA', #ENV['AWS_ACCESS_KEY_ID'],
-  #                    :secret_access_key => '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' #ENV['AWS_SECRET_ACCESS_KEY']
-  #                  },
-  #                  :styles => { :medium => "300x300>",
-  #                               :thumb => "100x100>" }
-end
 
 #Paperclip.configure do |config|
   #config.root               = Rails.root # the application root to anchor relative urls (defaults to Dir.pwd)
@@ -199,24 +234,41 @@ post '/tests/upload.php' do
   unless params[:file] && (tmpfile = params[:file][:tempfile]) && (name = params[:file][:filename])
     return puts 'error'
   end
-  while blk = tmpfile.read(65536)
-    AWS::S3::Base.establish_connection!(
-    :access_key_id     => settings.s3_key,
-    :secret_access_key => settings.s3_secret)
-    AWS::S3::S3Object.store(name,open(tmpfile),settings.bucket,:access => :public_read)     
-  end
   
-  AWS::S3::Base.establish_connection!(
-      :access_key_id     => settings.s3_key,
-      :secret_access_key => settings.s3_secret)
+  image = MyImage.new(:name => name, :tmpfile => tmpfile)
+  image.save
+
+
+  #AWS::S3::Base.establish_connection!(
+  #  :access_key_id     => settings.s3_key,
+  #  :secret_access_key => settings.s3_secret)
   
-  @image = MyImage.new
-  puts 'new image'
-  @image.image = AWS::S3::S3Object.find(params[:file][:filename], settings.bucket).url #params[:file] #загрузка изображения
-  puts 'create image'
+  #while blk = tmpfile.read(65536)
+  
+  #  AWS::S3::S3Object.store(name, @tmpfile, settings.bucket,:access => :public_read)
+
+  #  img = MiniMagick::Image.read(@tmpfile.open).first
+  #  thumbnail = img.resize "150x150"
+    #length = t.rows > t.columns ? t.columns : t.rows
+    #thumbnail = t.crop(CenterGravity, length, length)
+
+  #  AWS::S3::S3Object.store(name+"_thumb", thumbnail, settings.bucket,:access => :public_read)
+
+    #AWS::S3::S3Object.store(name,open(tmpfile),settings.bucket,:access => :public_read)     
+  #end
+  
+  #AWS::S3::Base.establish_connection!(
+  #    :access_key_id     => settings.s3_key,
+  #    :secret_access_key => settings.s3_secret)
+  
+  #@image = MyImage.new
+  #puts 'new image'
+  #@image.original = AWS::S3::S3Object.find(params[:file][:filename], settings.bucket).url #params[:file] #загрузка изображения
+  #@image.thumb = AWS::S3::S3Object.find(params[:file][:filename]+"_thumb", settings.bucket).url
+  #puts 'create image'
   #puts "#{@image.image.url}"
-  @image.save
-  puts 'save image'
+  #@image.save
+  #puts 'save image'
   #@image.reload
   #puts 'reload image'
   #content_type 'image/jpg'
@@ -239,7 +291,7 @@ post '/tests/upload.php' do
   #для отправки файла целиком
   #send_file @image.image.current_path, :filename => @image.image.filename, :type => 'image/jpeg'
 
-  "<img src=#{@image.image} />"
+  "<img src=#{image.original} />"
 
   #"<img src=#{@image.image.url} />"
 end
@@ -248,9 +300,9 @@ get '/tests/images.json' do
   content = '['
   MyImage.all.each do |img|
     content += '{"thumb": "'
-    content += img.image#.thumb.url
+    content += img.thumb#.thumb.url
     content += '", "image": "'
-    content += img.image#.url
+    content += img.original#.url
     content += '"},'
   end
   content = content[0,content.length-1]

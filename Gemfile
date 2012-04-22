@@ -7,8 +7,9 @@ gem 'sass'
 gem 'haml'
 #gem 'carrierwave'
 #gem 'carrierwave-datamapper'
-#gem 'mini_magick'
+gem 'mini_magick'
 #gem 'fog', "~> 1.3.1"
 #gem 'paperclip'
-gem 'dm-paperclip'
+#gem 'dm-paperclip'
 gem 'aws-s3'
+#gem "rmagick", :require => "RMagick"
