@@ -88,8 +88,8 @@ class MyImage
   #                               :thumb => "100x100>" }
 end
 
-#DataMapper.finalize
-DataMapper.auto_migrate!
+DataMapper.finalize
+#DataMapper.auto_migrate!
 
 ##migration( 1, :add_my_image_paperclip_fields ) do
 #up do
