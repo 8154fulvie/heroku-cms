@@ -8,7 +8,13 @@ require 'sass'
 #require 'carrierwave/datamapper'
 #require 'fog'
 #require 'paperclip'
-require 'dm-paperclip'
+#require 'dm-paperclip'
+#require 'aws-s3'
+require 'aws/s3'
+
+set :bucket, 'MYFIRSTBUCKETS'
+set :s3_key, 'AKIAJ533TM552SWWNZFA'
+set :s3_secret, '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'
 
 DataMapper.setup(:default, ENV['DATABASE_URL'] || 'sqlite:./db/page.db')
 
@@ -20,15 +26,15 @@ class Page
   property :alias,            String
   property :short,            Text
   property :full,             Text
-  property :seo_title,        String
-  property :seo_keywords,     String
-  property :seo_description,  String
+  property :seo_title,        String, :length=>255
+  property :seo_keywords,     String, :length=>255
+  property :seo_description,  String, :length=>255
   property :created_at,       DateTime
   property :updated_at,       DateTime
 end
 
 DataMapper.finalize
-#DataMapper.auto_migrate
+#DataMapper.auto_migrate!
 
 ##migration( 1, :add_my_image_paperclip_fields ) do
 #up do
@@ -48,26 +54,30 @@ DataMapper.finalize
 
 class MyImage
   include DataMapper::Resource
-  include Paperclip::Resource
-  property :id, Serial
+
+  property :id,               Serial
+  property :image,             String, :length=>255
+
+  #include Paperclip::Resource
+  #property :id, Serial
   #property :falename, String
-  has_attached_file :image,
-                    :storage => :s3,
-                    :bucket => ENV['S3_BUCKET_NAME'],
-                    :s3_credentials => {
-                      :access_key_id => ENV['AWS_ACCESS_KEY_ID'],
-                      :secret_access_key => ENV['AWS_SECRET_ACCESS_KEY']
-                    },
-                    :styles => { :medium => "300x300>",
-                                 :thumb => "100x100>" }
+  #has_attached_file :image,
+  #                  :storage => :s3,
+  #                  :bucket => 'MYFIRSTBUCKETS', #ENV['S3_BUCKET_NAME'],
+  #                  :s3_credentials => {
+  #                    :access_key_id => 'AKIAJ533TM552SWWNZFA', #ENV['AWS_ACCESS_KEY_ID'],
+  #                    :secret_access_key => '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' #ENV['AWS_SECRET_ACCESS_KEY']
+  #                  },
+  #                  :styles => { :medium => "300x300>",
+  #                               :thumb => "100x100>" }
 end
 
-Paperclip.configure do |config|
+#Paperclip.configure do |config|
   #config.root               = Rails.root # the application root to anchor relative urls (defaults to Dir.pwd)
   #config.env                = Rails.env  # server env support, defaults to ENV['RACK_ENV'] or 'development'
-  config.use_dm_validations = false       # validate attachment sizes and such, defaults to false
+  #config.use_dm_validations = false       # validate attachment sizes and such, defaults to false
   #config.processors_path    = 'lib/pc'   # relative path to look for processors, defaults to 'lib/paperclip_processors'
-end
+#end
 
 #конфигурация carrierwave
 #CarrierWave.configure do |config|
@@ -186,15 +196,29 @@ get '/admin/delete/:id' do
 end
 
 post '/tests/upload.php' do
+  unless params[:file] && (tmpfile = params[:file][:tempfile]) && (name = params[:file][:filename])
+    return puts 'error'
+  end
+  while blk = tmpfile.read(65536)
+    AWS::S3::Base.establish_connection!(
+    :access_key_id     => settings.s3_key,
+    :secret_access_key => settings.s3_secret)
+    AWS::S3::S3Object.store(name,open(tmpfile),settings.bucket,:access => :public_read)     
+  end
+  
+  AWS::S3::Base.establish_connection!(
+      :access_key_id     => settings.s3_key,
+      :secret_access_key => settings.s3_secret)
+  
   @image = MyImage.new
   puts 'new image'
-  @image.image = params[:file] #загрузка изображения
+  @image.image = AWS::S3::S3Object.find(params[:file][:filename], settings.bucket).url #params[:file] #загрузка изображения
   puts 'create image'
-  puts "#{@image.image.url}"
+  #puts "#{@image.image.url}"
   @image.save
   puts 'save image'
-  @image.reload
-  puts 'reload image'
+  #@image.reload
+  #puts 'reload image'
   #content_type 'image/jpg'
   #img = File.read(@image.image.current_path)
   #img.format = 'jpg'
@@ -215,16 +239,18 @@ post '/tests/upload.php' do
   #для отправки файла целиком
   #send_file @image.image.current_path, :filename => @image.image.filename, :type => 'image/jpeg'
 
-  "<img src=#{@image.image.url} />"
+  "<img src=#{@image.image} />"
+
+  #"<img src=#{@image.image.url} />"
 end
 
 get '/tests/images.json' do
   content = '['
   MyImage.all.each do |img|
     content += '{"thumb": "'
-    content += img.image.thumb.url
+    content += img.image#.thumb.url
     content += '", "image": "'
-    content += img.image.url
+    content += img.image#.url
     content += '"},'
   end
   content = content[0,content.length-1]
