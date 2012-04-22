@@ -53,12 +53,10 @@ class MyImage
   #property :falename, String
   has_attached_file :image,
                     :storage => :s3,
-                    #:bucket => 'MYFIRSTBUCKETS',
+                    :bucket => ENV['S3_BUCKET_NAME'],
                     :s3_credentials => {
-                      :access_key_id => 'AKIAJ533TM552SWWNZFA',
-                      :secret_access_key => '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',
-                      :bucket => "MYFIRSTBUCKETS",
-                      :path => "images/:basename.:extension"
+                      :access_key_id => ENV['AWS_ACCESS_KEY_ID'],
+                      :secret_access_key => ENV['AWS_SECRET_ACCESS_KEY']
                     },
                     :styles => { :medium => "300x300>",
                                  :thumb => "100x100>" }
