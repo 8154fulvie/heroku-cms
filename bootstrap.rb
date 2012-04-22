@@ -34,7 +34,7 @@ class Page
 end
 
 #DataMapper.finalize
-DataMapper.auto_migrate
+DataMapper.auto_migrate!
 
 ##migration( 1, :add_my_image_paperclip_fields ) do
 #up do
