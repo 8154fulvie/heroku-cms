@@ -33,8 +33,8 @@ class Page
   property :updated_at,       DateTime
 end
 
-DataMapper.finalize
-#DataMapper.auto_migrate!
+#DataMapper.finalize
+DataMapper.auto_migrate
 
 ##migration( 1, :add_my_image_paperclip_fields ) do
 #up do
