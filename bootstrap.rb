@@ -41,37 +41,37 @@ class MyImage
   attr_writer :tmpfile
   
   property :id,               Serial
-  property :original,         String, :length=>255
-  property :thumb,            String, :length=>255
+  #property :original,         String, :length=>255
+  #property :thumb,            String, :length=>255
   property :name,             String, :length=>255
 
-  before :save, :save_image_s3
+  after :save, :save_image_s3
 
   def save_image_s3
     AWS::S3::Base.establish_connection!(
     :access_key_id     => settings.s3_key,
     :secret_access_key => settings.s3_secret)
   
-  #while blk = tmpfile.read(65536)
+    #while blk = tmpfile.read(65536)
   
-    AWS::S3::S3Object.store(name, @tmpfile, settings.bucket,:access => :public_read)
+    AWS::S3::S3Object.store(id.to_s + name, @tmpfile, settings.bucket,:access => :public_read)
 
     img = MiniMagick::Image.read(@tmpfile.open)
     img.resize("150x150")
     #length = t.rows > t.columns ? t.columns : t.rows
     #thumbnail = t.crop(CenterGravity, length, length)
 
-    AWS::S3::S3Object.store("_thumb_"+name, img.to_blob, settings.bucket,:access => :public_read)
+    AWS::S3::S3Object.store(id.to_s + "_thumb_" + name, img.to_blob, settings.bucket,:access => :public_read)
 
     #AWS::S3::S3Object.store(name,open(tmpfile),settings.bucket,:access => :public_read)     
-  #end
+    #end
   
-  #AWS::S3::Base.establish_connection!(
-  #    :access_key_id     => settings.s3_key,
-  #    :secret_access_key => settings.s3_secret)
+    #AWS::S3::Base.establish_connection!(
+    #    :access_key_id     => settings.s3_key,
+    #    :secret_access_key => settings.s3_secret)
   
-    self.original = AWS::S3::S3Object.find(name, settings.bucket).url #params[:file] #загрузка изображения
-    self.thumb = AWS::S3::S3Object.find("_thumb_"+name, settings.bucket).url  
+    #self.original = AWS::S3::S3Object.find(name, settings.bucket).url #params[:file] #загрузка изображения
+    #self.thumb = AWS::S3::S3Object.find("_thumb_"+name, settings.bucket).url  
   end
 
   #include Paperclip::Resource
@@ -88,8 +88,8 @@ class MyImage
   #                               :thumb => "100x100>" }
 end
 
-DataMapper.finalize
-#DataMapper.auto_migrate!
+#DataMapper.finalize
+DataMapper.auto_migrate!
 
 ##migration( 1, :add_my_image_paperclip_fields ) do
 #up do
@@ -231,7 +231,7 @@ get '/admin/delete/:id' do
 end
 
 post '/tests/upload.php' do
-  unless params[:file] && (tmpfile = params[:file][:tempfile]) && (name = params[:file][:filename])
+  unless params[:file] && ((tmpfile = params[:file][:tempfile])  && (name = params[:file][:filename]))
     return puts 'error'
   end
   
@@ -291,18 +291,18 @@ post '/tests/upload.php' do
   #для отправки файла целиком
   #send_file @image.image.current_path, :filename => @image.image.filename, :type => 'image/jpeg'
 
-  "<img src=#{image.original} />"
+  "<img src=http://s3.amazonaws.com/#{settings.bucket}/#{image.id.to_s + image.name} />"
 
   #"<img src=#{@image.image.url} />"
 end
 
 get '/tests/images.json' do
   content = '['
-  MyImage.all.each do |img|
+  MyImage.all(:order => [ :id.desc ]).each do |img|
     content += '{"thumb": "'
-    content += img.thumb#.thumb.url
+    content += "http://s3.amazonaws.com/#{settings.bucket}/#{img.id.to_s + '_thumb_' + img.name}" #img.thumb#.thumb.url
     content += '", "image": "'
-    content += img.original#.url
+    content += "http://s3.amazonaws.com/#{settings.bucket}/#{img.id.to_s + img.name}" #img.original#.url
     content += '"},'
   end
   content = content[0,content.length-1]
