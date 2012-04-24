@@ -1,4 +1,15 @@
 .row-fluid
 	.span3
 		%h1= @page.name
-	.span7= @page.full
+	- if @page.alias != 'service'
+		.banner
+			%a{:href=>"/service.html#business-card", :title=>"сайт-визитка за 3 дня за 3000 в веб-студии юлиансайт подробнее"}
+				%img{:src=>"/img/business-card.png"}
+			%a{:href=>"/service.html#seo", :title=>"раскрутка сайта продвижение сайта в воронеже веб-студия юлиансайт подробнее"}
+				%img{:src=>"/img/seo.png"}
+		.span7.withbanner
+			= @page.full
+	- else
+		.span7
+			= @page.full
+.clear

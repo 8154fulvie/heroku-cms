@@ -58,6 +58,17 @@ strong
 					color: #339
 					text-decoration: underline
 	#content
+		.clear
+			clear: both
+		.banner
+			float: right
+			width: 200px
+			padding: 0px
+			clear: none
+			img
+				margin-bottom: 20px
+		.withbanner
+			margin-right: 260px
 		clear: both
 		margin-top: 150px
 		h1
@@ -69,12 +80,19 @@ strong
 			margin-bottom: 20px
 		h2
 			margin: 20px 0
-			font: bold 20px 'Verdana'
+			font: bold 24px 'Verdana'
 			color: #4d4d4d
 		p
 			font: normal 14px 'Verdana'
 			color: #4d4d4d
-			line-height: 24px
+			line-height: 200%
+			padding: 0
+			margin: 0
+			text-align: justify
+			word-wrap: break-word
+			&:first-letter
+				//font-weight: bold
+				font-size: 24px
 		ul
 			li
 				margin-left: 10px
