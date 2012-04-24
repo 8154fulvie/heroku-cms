@@ -88,8 +88,8 @@ class MyImage
   #                               :thumb => "100x100>" }
 end
 
-#DataMapper.finalize
-DataMapper.auto_migrate!
+DataMapper.finalize
+#DataMapper.auto_migrate!
 
 ##migration( 1, :add_my_image_paperclip_fields ) do
 #up do
@@ -172,7 +172,7 @@ helpers do
 
   def authorized?
     @auth ||= Rack::Auth::Basic::Request.new(request.env)
-    @auth.provided? && @auth.basic? && @auth.username && @auth.credentials == ['admin', 'password']
+    @auth.provided? && @auth.basic? && @auth.username && @auth.credentials == ['igel', 'yfcntymrf84']
   end
 end
 
