@@ -629,7 +629,7 @@ var $table, $table_tr, $table_td, $tbody, $thead, $current_tr, $current_td;
 		},
 		_clean: function(html)
 		{		
-			return html.replace(/<(?!\s*\/?(span|a|br|p|b|i|del|img|video|audio|iframe|object|embed|param|blockqoute|mark|cite|small|ul|ol|li|hr|dl|dt|dd|sup|sub|big|pre|code|figure|figcaption|strong|em|table|tr|td|th|tbody|thead|tfoot|h1|h2|h3|h4|h5|h6)\b)[^>]+>/gi,"");
+			return html.replace(/<(?!\s*\/?(span|a|br|p|strong|i|del|img|video|audio|iframe|object|embed|param|blockqoute|mark|cite|small|ul|ol|li|hr|dl|dt|dd|sup|sub|big|pre|code|figure|figcaption|strong|em|table|tr|td|th|tbody|thead|tfoot|h1|h2|h3|h4|h5|h6)\b)[^>]+>/gi,"");
 		},	
 		
 		// TEXTAREA CODE FORMATTING
@@ -673,7 +673,7 @@ var $table, $table_tr, $table_td, $tbody, $thead, $current_tr, $current_td;
 			html = html.replace(/[\s\n]*$/, '');	
 
 			// empty tags
-			var btags = ["<pre></pre>","<blockquote></blockquote>","<em></em>","<b></b>","<ul></ul>","<ol></ol>","<li></li>","<table></table>","<tr></tr>","<span><span>", "<span>&nbsp;<span>", "<p> </p>", "<p></p>", "<p>&nbsp;</p>",  "<p><br></p>", "<div></div>"];
+			var btags = ["<pre></pre>","<blockquote></blockquote>","<em></em>","<strong></strong>","<ul></ul>","<ol></ol>","<li></li>","<table></table>","<tr></tr>","<span><span>", "<span>&nbsp;<span>", "<p> </p>", "<p></p>", "<p>&nbsp;</p>",  "<p><br></p>", "<div></div>"];
 			for (i = 0; i < btags.length; ++i)
 			{
 				var bbb = btags[i];
